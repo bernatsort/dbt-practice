@@ -1,0 +1,57 @@
+Adding Elementary gives you:
+
+📊 Visual history of dbt test results
+⏱ Tracking of model run time, row counts, and freshness
+🧠 Alerting and detection of schema or volume anomalies
+📥 HTML reports you can review or share
+🔔 Alerts (Slack/email/webhook) when something breaks
+
+
+
+# 1. Build Elementary dbt models
+dbt run --select elementary
+dbt run --select elementary just builds the Elementary monitoring models/tables in your warehouse (like elementary_test_results, alerts_dbt_tests, etc.).
+👉 It does NOT collect test results.
+You only need to run dbt run --select elementary:
+When you're setting up Elementary for the first time
+After upgrading the Elementary package
+After changing Elementary configs
+Occasionally, to make sure the metadata tables exist and are updated
+But it’s not needed before every run.
+
+
+# 2. Run normal dbt flow
+dbt seed
+dbt run
+dbt test
+dbt snapshot
+
+# 3. Monitor
+edr monitor --dbt-project-dir . --warehouse-type postgres
+
+# 4. Open the HTML report!
+
+
+You ran dbt test → this generated the run_results.json file.
+Elementary's on-run-end hook (already wired into the package) ran automatically as part of dbt test and:
+    Extracted the test results
+    Uploaded them directly into elementary_test_results
+
+
+Even though your test results are already uploaded, running:
+edr monitor --warehouse-type postgres
+still gives you major benefits:
+
+Generates the full HTML report (locally)
+
+Collects schema diffs, volume metrics, freshness, anomaly detection
+
+Updates views like alerts_dbt_tests, alerts_schema_changes, etc.
+
+So it’s recommended for:
+
+Daily observability monitoring
+
+Manual inspection and debugging
+
+Generating dashboards or reports
