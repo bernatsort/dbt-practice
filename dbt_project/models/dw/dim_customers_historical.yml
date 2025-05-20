@@ -1,0 +1,35 @@
+# models/dw/dim_customers_historical.yml
+version: 2
+models: 
+  - name: dim_customers_historical
+    description: "Type 2 historized dimension of customers, built from dbt snapshots"
+    columns:
+      - name: dim_cdc_key
+        description: "Unique identifier for each historical version of a customer"
+        data_tests:
+          - not_null
+          - unique
+        
+      - name: customer_id
+        description: "Business key"
+        data_tests:
+          - not_null
+        
+      - name: int_tec_fr_dt
+        description: "Validity start timestamp for this version"
+
+      - name: int_tec_to_dt
+        description: "Validity end timestamp for this version"
+
+      - name: curr_flg
+        description: "1 if the record is the current version, else 0"
+        data_tests:
+          - accepted_values:
+              values: [0, 1]
+
+      - name: del_flg
+        description: "1 if the record was deleted from the source"
+        data_tests:
+          - accepted_values:
+              values: [0, 1]
+

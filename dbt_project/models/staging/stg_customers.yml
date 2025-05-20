@@ -1,0 +1,10 @@
+# models/staging/stg_models.yml
+version: 2
+models:
+  - name: stg_customers
+    description: "Staging model for customers table with standarized field formats and derived int_tec_fr_dt"
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null

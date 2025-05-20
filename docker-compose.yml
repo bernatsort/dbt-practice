@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres_dbt
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dbt_practice
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+
+# This setup:
+
+  # Pulls the official PostgreSQL 16 image
+  # Creates a clean DB called dbt_practice
+  # Exposes PostgreSQL on port 5432
+  # Persists data in a volume called pg_data

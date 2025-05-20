@@ -1,0 +1,39 @@
+-- First Load
+customer_id,first_name,last_name,email,updated_at
+1,John,Doe,john@email.com,2024-12-01
+2,Jane,Smith,jane@email.com,2025-05-17
+3,Alice,Brown,alice@email.com,2025-02-10
+
+-- Second Load
+customer_id,first_name,last_name,email,updated_at
+1,John,Doe,john@email.com,2024-12-01
+2,Jane,Smith,jane.new@email.com,2025-05-20   <-- changed email (updated)
+3,Alice,Brown,alice@email.com,2025-02-10
+4,Bob,Lee,bob@email.com,2025-05-20         <-- new customer
+
+-- Third Load
+customer_id,first_name,last_name,email,updated_at
+                                            <-- deleted customer (1,John,Doe,john@email.com,2024-12-01)
+2,Jane,Smith,jane.new@email.com,2025-05-20  
+3,Alice,Brown,alice@email.com,2025-02-10
+4,Bob,Lee,bob@email.com,2025-05-20
+
+
+-- DBT Commands
+| -------------------------------------------- | ------------------------------------------------- |
+|  dbt seed                                    | Refreshes raw data from  customers.csv            |
+|  dbt snapshot                                | Tracks changes into  snapshot.customers_snapshot  |
+|  dbt run --select dim_customers_historical   | Builds/increments the SCD2 dimension              |
+|  dbt test --select dim_customers_historical  | Runs your new tests (from the  .yml )             |
+
+
+Your setup uses:
+
+✅ seeds/customers.csv → full load always
+
+✅ ephemeral staging model → lightweight
+
+✅ snapshot with timestamp strategy → accumulates history
+
+✅ incremental model with MERGE → avoids reprocessing past data
+
