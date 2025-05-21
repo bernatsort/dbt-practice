@@ -11,7 +11,8 @@ Adding Elementary gives you:
 # 1. Build Elementary dbt models
 dbt run --select elementary
 dbt run --select elementary just builds the Elementary monitoring models/tables in your warehouse (like elementary_test_results, alerts_dbt_tests, etc.).
-👉 It does NOT collect test results.
+This will mostly create empty tables, that will be updated with artifacts, metrics and test results in your future dbt executions.
+It does NOT collect test results.
 You only need to run dbt run --select elementary:
 When you're setting up Elementary for the first time
 After upgrading the Elementary package
@@ -23,7 +24,7 @@ But it’s not needed before every run.
 # 2. Run normal dbt flow
 dbt seed
 dbt run
-dbt test
+dbt test: After you ran your tests, we recommend that you ensure that the results were loaded to elementary_test_results table.
 dbt snapshot
 
 # 3. Monitor
@@ -55,3 +56,13 @@ Daily observability monitoring
 Manual inspection and debugging
 
 Generating dashboards or reports
+
+
+######## ELEMENTARY TABLES ##############
+| Table Type                        | Replaces Data Every Run? | Stores History?            | Examples                                                        |
+| -------------------               | ------------------------ | ------------               | --------------------------------------------------------------- |
+|Metadata Models(dbt_artifacts)     | ✅ Yes                    | ❌ No                      | `dbt_models`, `dbt_columns`, dbt_tests                                     |
+|Result Models (run results)        | ❌ No                     | ✅ Yes (incremental)       | `dbt_run_results`, `elementary_test_results`, `dbt_invocations` |
+
+✅ You can track test failures, model durations, freshness, etc. over time — because those are in result models.
+⚠️ You cannot see past versions of model definitions or columns — because metadata models just show the latest version.
