@@ -41,13 +41,15 @@ models:
   ## for details, see docs: <https://docs.elementary-data.com/>
   elementary: 
     ## elementary models will be created in the schema '<your_schema>_elementary'
-    +schema: elementary
+    ### our target.schema is also public so if we want to put Elementary models into the exact public schema, we can omit +schema: public
+    +schema: public # (or write elementary if we want public_elementary)  
     ## To disable elementary for dev, uncomment this:
     # enabled: "{{ target.name in ['prod','analytics'] }}"
 
     # If you change materialization settings, make sure to run dbt run -s elementary --full-refresh.
 
-# Required from dbt 1.8 and above for certain Elementary features
+# Allowing Elementary to override dbt's default materializations (relevant from dbt 1.8)
+# https://docs.elementary-data.com/oss/quickstart/quickstart-cli-package#important-allowing-elementary-to-override-dbts-default-materializations-relevant-from-dbt-1-8
 flags:
   require_explicit_package_overrides_for_builtin_materializations: false # "It’s okay if a package like Elementary wants to override built-in behavior (like how tests are materialized). I approve."
   # Allows Elementary to override dbt’s default test behavior to collect failed row counts & row samples for better observability (Capture row-level test failures, Override how test materialization works, Provide richer test logging and alerting).

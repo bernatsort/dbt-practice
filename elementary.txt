@@ -66,3 +66,12 @@ Generating dashboards or reports
 
 ✅ You can track test failures, model durations, freshness, etc. over time — because those are in result models.
 ⚠️ You cannot see past versions of model definitions or columns — because metadata models just show the latest version.
+
+##### Elementary CLI (edr): #####
+https://docs.elementary-data.com/oss/quickstart/quickstart-cli#what-permissions-are-required-for-the-elementary-profile
+Postgres: pip install elementary-data
+Snowflake: pip install 'elementary-data[snowflake]'
+
+edr report --env dev
+- The command will use the provided connection profile to access the data warehouse, 
+  read from the Elementary tables, and generate the report as an HTML file.
