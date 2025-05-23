@@ -31,7 +31,7 @@ with DAG(
     env = {
     "DBT_PROJECT_DIR": DBT_PROJECT_DIR,
     "PATH": "/home/airflow/.local/bin:/usr/local/bin:/usr/bin:/bin",
-    "DBT_HOST": "postgres",  #  profiles.yml: override solo para Airflow (localhost en local)
+    "DBT_HOST": "postgres",  #  profiles.yml: override solo para Airflow (localhost en local). # keep or move to compose.yml – your call
     }
 
     dbt_seed = BashOperator(
