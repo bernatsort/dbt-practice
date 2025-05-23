@@ -71,6 +71,7 @@ with DAG(
     # Although your Airflow DAG now generates the documentation with dbt docs generate, 
     # Airflow does not host or display the docs UI (i.e., the nice searchable web interface). 
     # The dbt docs generate step only creates the artifacts locally inside the container.
+    # Same with the edr report. 
 
     # Orchestration
     dbt_seed >> dbt_snapshot >> dbt_build >> dbt_docs_generate >> edr_report
