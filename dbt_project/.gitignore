@@ -2,3 +2,10 @@
 target/
 dbt_packages/
 logs/
+
+# Elementary outputs
+edr_target/
+
+# Clinical trials project
+models/clin_trials/
+seeds/trials_data/
