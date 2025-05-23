@@ -55,12 +55,22 @@ with DAG(
         env=env,
     )
 
+    dbt_docs_generate = BashOperator(
+        task_id="dbt_docs_generate",
+        bash_command="cd $DBT_PROJECT_DIR && dbt docs generate",
+        trigger_rule=TriggerRule.ALL_DONE,
+        env=env,
+    )
+
     edr_report = BashOperator(
         task_id="edr_report",
         bash_command="cd $DBT_PROJECT_DIR && edr report",
         trigger_rule=TriggerRule.ALL_DONE,  #  se ejecuta incluso si dbt_build falló. Esto garantiza que edr_report siempre se ejecute, incluso si dbt_build falla por tests.
         env=env,
     )
+    # Although your Airflow DAG now generates the documentation with dbt docs generate, 
+    # Airflow does not host or display the docs UI (i.e., the nice searchable web interface). 
+    # The dbt docs generate step only creates the artifacts locally inside the container.
 
     # Orchestration
-    dbt_seed >> dbt_snapshot >> dbt_build >> edr_report
+    dbt_seed >> dbt_snapshot >> dbt_build >> dbt_docs_generate >> edr_report
