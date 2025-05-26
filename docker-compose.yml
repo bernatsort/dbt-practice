@@ -1,9 +1,38 @@
-version: '3.8'
+# docker-compose.yml
+version: "3.8"
 
+# --------------------------------------------------------------------------- #
+# 1) Common definition for every Airflow container                            #
+# --------------------------------------------------------------------------- #
+x-airflow-common: &airflow-common
+  #image: apache/airflow:2.9.1-python3.10         # pin Airflow + Python # keeps the file tidy  # put AIRFLOW_UID=50000 on mac/linux
+  build: ./airflow-img # custom image
+  # env_file:                                      
+  #   - .env                                      
+  environment: &airflow-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow_postgres/airflow
+    AIRFLOW__WEBSERVER__SECRET_KEY: your_secret_key
+    # DBT_HOST: postgres  #  profiles.yml: override solo para Airflow (localhost en local). # keep or move the dag code – your call
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./plugins:/opt/airflow/plugins
+    - ./dbt_project:/opt/dbt_project          # <— only the dbt project, no “..”
+    - ~/.dbt:/home/airflow/.dbt # En MacOS, ~/.dbt se expande correctamente a /Users/bernatsort/.dbt. # macOS path; on Linux use $HOME/.dbt
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    - airflow_postgres
+
+# --------------------------------------------------------------------------- #
+# 2) Services                                                                 #
+# --------------------------------------------------------------------------- #
 services:
+  # Warehouse that dbt will build models in
   postgres:
     image: postgres:16
-    container_name: postgres_dbt
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -14,12 +43,45 @@ services:
       - pg_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  # Airflow metadata DB
+  airflow_postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow_pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    restart: always
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: always
+
+  # One-shot container that initialises the DB and creates an admin user
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command: -c "
+      airflow db init &&
+      airflow users create \
+          --username admin --password admin \
+          --firstname Airflow --lastname Admin \
+          --role Admin --email admin@example.com
+      "
+    restart: on-failure
+
+# --------------------------------------------------------------------------- #
+# 3) Volumes                                                                  #
+# --------------------------------------------------------------------------- #
 volumes:
   pg_data:
-
-# This setup:
-
-  # Pulls the official PostgreSQL 16 image
-  # Creates a clean DB called dbt_practice
-  # Exposes PostgreSQL on port 5432
-  # Persists data in a volume called pg_data
+  airflow_pg_data:
