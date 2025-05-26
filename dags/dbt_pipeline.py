@@ -43,12 +43,13 @@ with DAG(
         env=env,
     )
 
-    dbt_snapshot = BashOperator(
-        task_id="dbt_snapshot",
-        bash_command="cd $DBT_PROJECT_DIR && dbt snapshot",
-        env=env,
-    )
-
+    # dbt_snapshot = BashOperator(
+    #     task_id="dbt_snapshot",
+    #     bash_command="cd $DBT_PROJECT_DIR && dbt snapshot",
+    #     env=env,
+    # )
+    
+    # dbt build also run snapsbots
     dbt_build = BashOperator(
         task_id="dbt_build",
         bash_command="cd $DBT_PROJECT_DIR && dbt build --exclude tag:wip",
@@ -74,4 +75,4 @@ with DAG(
     # Same with the edr report. 
 
     # Orchestration
-    dbt_seed >> dbt_snapshot >> dbt_build >> dbt_docs_generate >> edr_report
+    dbt_seed >> dbt_build >> dbt_docs_generate >> edr_report

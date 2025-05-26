@@ -8,5 +8,5 @@ models:
         data_tests:
           - unique
           - not_null
-          - accepted_values: #  add a bogus constraint to see a failing test and see failed rows appear in test_result_rows (test_result_rows is empty when all tests pass)
-              values: [999999] # value that definitely doesn't exist
+          # - accepted_values: #  add a bogus constraint to see a failing test and see failed rows appear in test_result_rows (test_result_rows is empty when all tests pass)
+          #     values: [999999] # value that definitely doesn't exist
