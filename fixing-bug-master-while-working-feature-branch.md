@@ -116,6 +116,47 @@ git stash pop
 
 > 🛠️ Resolve any conflicts, stage, and commit if needed.
 
+
+Common message after git stash pop:
+```bash
+Your branch and 'origin/feature/elementary-config' have diverged,
+and have 6 and 1 different commits each, respectively.
+```
+
+This means:
+
+* Your **local branch** has **6 commits** (the ones after your rebase).
+* The **remote branch** (`origin/feature/elementary-config`) has **1 commit** that your local branch no longer contains (the old commit before the rebase).
+* Git sees that the histories don’t match.
+
+---
+
+This is **exactly** what happens after a rebase on a pushed branch.
+
+It’s not an error — it’s just Git saying:
+
+> “Hey, your local and remote histories are different. Are you *sure* you want to push?”
+
+And you respond confidently with:
+
+```bash
+git push --force-with-lease
+```
+
+Which means:
+
+> “Yes, I know I rebased — please update the remote branch to match my local one, **but only if no one else has changed it**.”
+
+---
+
+🚨 What would cause problems?
+
+Only if:
+
+* Someone else pushed new commits to the remote **after your last fetch** and you blindly did `git push --force` (without `--with-lease`) — then you might overwrite their work.
+
+But `--force-with-lease` protects you from that.
+
 ---
 
 #### 10. **Continue working or push your updated feature branch:**
@@ -127,7 +168,17 @@ git push --force-with-lease
 ```
 
 > Use `--force-with-lease` only if you previously rebased and already pushed the branch.
+> Safely overwrites the remote with your rebased version. But protects you if someone else pushed to the same branch while you were rebasing. So it’s like saying: “Only force-push if no one else has changed this branch since I last fetched.”
+> “Yes, I know I rebased — please update the remote branch to match my local one, but only if no one else has changed it.”
 
+
+❌ Why not git push?
+- A normal git push will fail here because of the diverged history.
+- It will tell you to pull first — but you shouldn’t pull after a rebase (that would mess up your clean history).
+
+❌ Why not --force?
+- git push --force will overwrite the remote no matter what, even if someone else pushed changes in the meantime.
+- It’s dangerous in team environments.
 ---
 
 ### ✅ Git Commands Summary (Copy-Paste Version):
