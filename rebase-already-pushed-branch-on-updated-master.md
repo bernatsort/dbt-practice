@@ -108,7 +108,7 @@ git commit -m "Continue work on feature/elementary-config"
 #### 8. **Push your rebased branch — safely overwriting remote:**
 
 ```bash
-git push --force-with-lease
+git push origin feature/elementary-config --force-with-lease
 ```
 
 > This is needed because the rebase rewrites history.

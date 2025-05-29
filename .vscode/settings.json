@@ -1,0 +1,7 @@
+{
+  "dbt.dbtPath": "/Users/bernatsort/Developer/data-engineering-env/dbt_project/.venv/bin/dbt",
+  "dbt.environmentVariables": {
+    "PATH": "/opt/homebrew/opt/libpq/bin:${env:PATH}",
+    "DYLD_LIBRARY_PATH": "/opt/homebrew/opt/libpq/lib"
+  }
+}

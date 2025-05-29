@@ -9,3 +9,4 @@ edr_target/
 # Clinical trials project
 models/clin_trials/
 seeds/trials_data/
+dbt_internal_packages/
