@@ -73,14 +73,26 @@
 {% endmacro %}
 
 {% macro mark_model_as_ok(model) %}
+    {% set max_date_query %}
+        SELECT MAX(int_tec_fr_dt) FROM {{ model.schema }}.{{ model.identifier }}
+    {% endset %}
+
+    {% set result = run_query(max_date_query) %}
+    {% set max_chg_dt = none %}
+    {% if execute and result and result.rows | length > 0 %}
+        {% set max_chg_dt = result.rows[0][0] %}
+    {% endif %}
+
     {% set query %}
         UPDATE {{ model.schema }}.int_load_control_master
         SET load_status = 'OK',
             last_load_ts = current_timestamp,
             int_cre_ts = current_timestamp,
-            int_cre_usr = current_user
+            int_cre_usr = current_user,
+            max_chg_dt = {% if max_chg_dt %}'{{ max_chg_dt }}'{% else %}NULL{% endif %}
         WHERE table_nm = '{{ model.name }}'
     {% endset %}
+
     {% do run_query(query) %}
 {% endmacro %}
 
@@ -96,13 +108,19 @@
     {% do run_query(query) %}
 {% endmacro %}
 
+
 {% macro update_load_status_from_results(results) %}
     {% if execute %}
         {% for res in results %}
+            {% set model = {
+                "name": res.node.name,
+                "schema": res.node.schema,
+                "identifier": res.node.identifier
+            } %}
             {% if res.status == 'success' %}
-                {{ mark_model_as_ok(res.node) }}
+                {{ mark_model_as_ok(model) }}
             {% elif res.status == 'error' %}
-                {{ mark_model_as_ko(res.node) }}
+                {{ mark_model_as_ko(model) }}
             {% endif %}
         {% endfor %}
     {% endif %}

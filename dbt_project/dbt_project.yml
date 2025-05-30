@@ -80,4 +80,5 @@ seeds:
       +quote_columns: false # prevents quoting columns names like "customer_id"
 
 
-on-run-end: "{{ update_load_status_from_results(results) }}"
+on-run-end: 
+  - "{{ update_load_status_from_results(results) }}"
