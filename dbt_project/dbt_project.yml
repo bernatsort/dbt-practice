@@ -37,6 +37,9 @@ models:
     dw:
       +schema: dw_schema
       +materialized: incremental
+      dim_customers_historical_load_control: 
+        pre-hook: "{{ truncate_if_full_mode(this) }}"
+
   ## elementary models will be created in the schema '<your_schema>_elementary'
   ## for details, see docs: <https://docs.elementary-data.com/>
   elementary: 
@@ -75,3 +78,6 @@ seeds:
       # When both the target schema and +schema override are the same (e.g., both public), dbt doesn't merge them — it concatenates them (target.schema + custom override like public_public).
       # Only use +schema: if you want to override the schema to something different from your target profile schema.
       +quote_columns: false # prevents quoting columns names like "customer_id"
+
+
+on-run-end: "{{ update_load_status_from_results(results) }}"
