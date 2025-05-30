@@ -61,6 +61,48 @@
 {% endmacro %}
 
 
+-- inserción automática en int_load_control_master si no existe.
+{% macro ensure_load_control_entry(model) %}
+    {% set query_check %}
+        SELECT COUNT(*) 
+        FROM {{ model.schema }}.int_load_control_master
+        WHERE table_nm = '{{ model.name }}'
+    {% endset %}
+
+    {% set result = run_query(query_check) %}
+    {% if execute and result and result.rows[0][0] == 0 %}
+        {{ log("No existe entrada en int_load_control_master para " ~ model.name ~ ". Creando...", info=True) }}
+
+        {% set insert_query %}
+            INSERT INTO {{ model.schema }}.int_load_control_master (
+                table_nm,
+                active_load_flg,
+                load_status,
+                load_mode,
+                load_type_prc,
+                orchestrator_nm,
+                int_cre_ts,
+                int_cre_usr
+            )
+            VALUES (
+                '{{ model.name }}',
+                1,
+                'PENDING',
+                'FULL',
+                NULL,
+                'dbt_pipeline',
+                current_timestamp,
+                current_user
+            )
+        {% endset %}
+
+        {% do run_query(insert_query) %}
+    {% else %}
+        {{ log("Entrada ya existe en int_load_control_master para " ~ model.name ~ ". OK", info=True) }}
+    {% endif %}
+{% endmacro %}
+
+
 {% macro mark_model_as_pending(model) %}
     {% set query %}
         UPDATE {{ model.schema }}.int_load_control_master
@@ -117,56 +159,60 @@
                 "schema": res.node.schema,
                 "identifier": res.node.identifier
             } %}
-            {% if res.status == 'success' %}
-                {{ mark_model_as_ok(model) }}
-            {% elif res.status == 'error' %}
-                {{ mark_model_as_ko(model) }}
+
+            {{ ensure_load_control_entry(model) }}
+
+            {% if res.node.resource_type == 'snapshot' %}
+                {% if res.status == 'success' %}
+                    {{ mark_model_as_ok(model) }}
+                {% elif res.status == 'error' %}
+                    {{ mark_model_as_ko(model) }}
+                {% endif %}
+
+            {% elif res.node.resource_type == 'model' %}
+                {% if res.status == 'success' %}
+                    {{ mark_model_as_ok(model) }}
+                {% elif res.status == 'error' %}
+                    {{ mark_model_as_ko(model) }}
+                {% endif %}
             {% endif %}
         {% endfor %}
     {% endif %}
 {% endmacro %}
 
 
--- inserción automática en int_load_control_master si no existe.
-{% macro ensure_load_control_entry(model) %}
-    {% set query_check %}
-        SELECT COUNT(*) 
-        FROM {{ model.schema }}.int_load_control_master
-        WHERE table_nm = '{{ model.name }}'
+-- Esta macro revisará la tabla int_tables_dependencies y buscará el estado de cada dependencia en int_load_control_master.
+
+{% macro check_dependencies(model) %}
+    {% set dep_query %}
+        SELECT dependency_schema_nm, dependency_tbl_nm, critical_dependency_flg
+        FROM {{ model.schema }}.int_tables_dependencies
+        WHERE schema_nm = '{{ model.schema }}'
+          AND tbl_nm = '{{ model.name }}'
     {% endset %}
 
-    {% set result = run_query(query_check) %}
-    {% if execute and result and result.rows[0][0] == 0 %}
-        {{ log("No existe entrada en int_load_control_master para " ~ model.name ~ ". Creando...", info=True) }}
+    {% set deps = run_query(dep_query).rows if execute else [] %}
 
-        {% set insert_query %}
-            INSERT INTO {{ model.schema }}.int_load_control_master (
-                table_nm,
-                active_load_flg,
-                load_status,
-                load_mode,
-                load_type_prc,
-                orchestrator_nm,
-                int_cre_ts,
-                int_cre_usr
-            )
-            VALUES (
-                '{{ model.name }}',
-                1,
-                'PENDING',
-                'FULL',
-                NULL,
-                'dbt_pipeline',
-                current_timestamp,
-                current_user
-            )
+    {% for dep in deps %}
+        {% set dep_schema = dep[0] %}
+        {% set dep_table = dep[1] %}
+        {% set critical = dep[2] %}
+
+        {% set status_query %}
+            SELECT load_status
+            FROM {{ dep_schema }}.int_load_control_master
+            WHERE table_nm = '{{ dep_table }}'
         {% endset %}
 
-        {% do run_query(insert_query) %}
-    {% else %}
-        {{ log("Entrada ya existe en int_load_control_master para " ~ model.name ~ ". OK", info=True) }}
-    {% endif %}
+        {% set status_result = run_query(status_query).rows if execute else [] %}
+        {% set status = status_result[0][0] if status_result | length > 0 else 'UNKNOWN' %}
+
+        {% if status in ['KO', 'KO_PRIO'] and critical == 1 %}
+            {{ exceptions.raise_compiler_error("DEPENDENCIA CRÍTICA KO para " ~ model.name ~ ": " ~ dep_schema ~ "." ~ dep_table) }}
+        {% elif status in ['KO', 'KO_PRIO'] and critical == 0 %}
+            {{ log("ADVERTENCIA: dependencia no crítica KO para " ~ model.name ~ ": " ~ dep_schema ~ "." ~ dep_table, info=True) }}
+        {% elif status == 'UNKNOWN' %}
+            {{ log("ADVERTENCIA: estado desconocido para dependencia de " ~ model.name ~ ": " ~ dep_schema ~ "." ~ dep_table, info=True) }}
+        {% endif %}
+    {% endfor %}
 {% endmacro %}
-
-
-

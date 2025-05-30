@@ -18,5 +18,4 @@ snapshots:
         dbt_updated_at: int_tec_upd_dt
         dbt_is_deleted: del_flg
 
-
         

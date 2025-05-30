@@ -5,13 +5,13 @@
     unique_key='dim_cdc_key',
     incremental_strategy='merge',
     on_schema_change='ignore',
-     pre_hook=[
+    pre_hook=[
         "{{ ensure_load_control_entry(this) }}",
-        "{{ mark_model_as_pending(this) }}",
+        "{{ check_dependencies(this) }}",             
         "{{ abort_if_not_active(this) }}",
+        "{{ mark_model_as_pending(this) }}",
         "{{ truncate_if_full_mode(this) }}"
     ]
-
 ) }}
 
 {% set control = get_control_params(this.identifier) %}
@@ -43,12 +43,12 @@ with source as (
         case
             when int_tec_to_dt::date = to_date('9999-12-31', 'YYYY-MM-DD') then 1
             else 0
-        end as curr_flg,
-        case
-            when del_flg::boolean = true then 1
-            else 0
-        end as del_flg
-    from {{ ref('customers_snapshot') }}
+        end as curr_flg --,
+        -- case
+        --     when del_flg::boolean = true then 1
+        --     else 0
+        -- end as del_flg
+    from {{ ref('customers_snapshot_prehooks') }}
 
     {% if is_incremental() and control.load_mode == 'DELTA' and max_date %}
     where int_tec_fr_dt > '{{ max_date }}'

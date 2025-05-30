@@ -10,3 +10,4 @@ edr_target/
 models/clin_trials/
 seeds/trials_data/
 dbt_internal_packages/
+
